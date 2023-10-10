@@ -9,18 +9,18 @@ def movie_with_id(_, info, _id):
                 return movie
 
 
-def movie_with_title(_, info, title):
+def movie_with_title(_, info, _title):
     with open('{}/data/movies.json'.format("."), "r") as file:
         movies = json.load(file)
         for movie in movies['movies']:
-            if movie['title'] == title:
+            if movie['title'] == _title:
                 return movie
 
-def movie_with_director(_, info, director):
+def movie_with_director(_, info, _director):
     with open('{}/data/movies.json'.format("."), "r") as file:
         movies = json.load(file)
         for movie in movies['movies']:
-            if movie['director'] == director:
+            if movie['director'] == _director:
                 return movie
 
 
