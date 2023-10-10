@@ -1,22 +1,35 @@
-import grpc
-from concurrent import futures
-import showtime_pb2
-import showtime_pb2_grpc
+from flask import Flask, render_template, request, jsonify, make_response
 import json
+from werkzeug.exceptions import NotFound
 
-class ShowtimeServicer(showtime_pb2_grpc.ShowtimeServicer):
+app = Flask(__name__)
 
-    def __init__(self):
-        with open('{}/data/times.json'.format("."), "r") as jsf:
-            self.db = json.load(jsf)["schedule"]
+PORT = 3202
+HOST = '0.0.0.0'
 
-def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    showtime_pb2_grpc.add_ShowtimeServicer_to_server(ShowtimeServicer(), server)
-    server.add_insecure_port('[::]:3002')
-    server.start()
-    server.wait_for_termination()
+with open('{}/databases/times.json'.format("."), "r") as jsf:
+    schedule = json.load(jsf)["schedule"]
 
 
-if __name__ == '__main__':
-    serve()
+@app.route("/", methods=['GET'])
+def home():
+    return "<h1 style='color:blue'>Welcome to the Showtime service!</h1>"
+
+
+@app.route("/showtimes", methods=['GET'])
+def get_schedule():
+    res = make_response(jsonify(schedule), 200)
+    return res
+
+
+@app.route("/showmovies/<date>", methods=['GET'])
+def get_movies_bydate(date):
+    for sched in schedule:
+        if str(sched["date"]) == str(date):
+            return make_response(jsonify(sched), 200)
+    return make_response(jsonify({"error": "bad input parameter"}), 400)
+
+
+if __name__ == "__main__":
+    print("Server running in port %s" % (PORT))
+    app.run(host=HOST, port=PORT)
