@@ -29,10 +29,10 @@ def delete_movie(_, info, _id):
     deleted = {}
     with (open('{}/data/movies.json'.format("."), "r") as rfile):
         movies = json.load(rfile)
-        for movie in movies['movies']:
+        for index, movie in enumerate(movies['movies']):
             if movie['id'] == _id:
                 deleted = movie
-                del movie
+                del movies[index]
                 newmovies = movies
                 break
     with open('{}/data/movies.json'.format("."), "w") as wfile:

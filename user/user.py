@@ -38,8 +38,14 @@ def request_service(method, path):
     except Exception as e:
         return make_response(jsonify({"error": str(e)}), 500)
 
+def request_graphql(path, query):
+    try:
+        req = requests.post(path, json={'query': query})
+        return make_response(jsonify(req.json()), req.status_code)
+    except Exception as e:
+        return make_response(jsonify({"error": str(e)}), 500)
 
-with open('{}/databases/users.json'.format("."), "r") as jsf:
+with open('{}/data/users.json'.format("."), "r") as jsf:
     users = json.load(jsf)["users"]
 
 
@@ -109,18 +115,54 @@ def delete_user_by_id(id):
 
 @app.route("/movies/<movieid>", methods=['GET'])
 def get_movie_byid(movieid):
-    return request_service(requests.get, f"http://{HOST}:{moviePort}/movies/{movieid}")
+    query = """
+        query Movie_with_id {
+            movie_with_id(_id: "%s") {
+                id
+                title
+                director
+                rating
+            }
+        }
+        """ % movieid
+
+    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
 
 
 @app.route("/moviesbytitle", methods=['GET'])
 def get_movie_bytitle():
-    return request_service(requests.get, f"http://{HOST}:{moviePort}/moviesbytitle")
+    title = ""
+    if request.args:
+        title = request.args["title"]
+    if not title:
+        return make_response(jsonify({"error": "movie title not found"}), 400)
+    query = """
+        query Movie_with_title {
+            movie_with_title(_title: "%s") {
+                id
+                title
+                director
+                rating
+            }
+        } 
+    """ % title
+    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
 
 
 @app.route("/moviesbyDirector/<movieDirector>", methods=['GET'])
 def get_movie_byDirector(movieDirector):
-    return request_service(requests.get, f"http://{HOST}:{moviePort}/moviesbyDirector/{movieDirector}")
+    query = """
+        query Movie_with_director {
+            movie_with_director(_director: "%s") {
+                id
+                title
+                director
+                rating
+            }
+        }  
+           """ % movieDirector
 
+    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
 
 @app.route("/movies/<movieid>", methods=['POST'])
 def create_movie(movieid):
@@ -129,12 +171,34 @@ def create_movie(movieid):
 
 @app.route("/movies/<movieid>/<rate>", methods=['PUT'])
 def update_movie_rating(movieid, rate):
-    return request_service(requests.put, f"http://{HOST}:{moviePort}/movies/{movieid}/{rate}")
+    query = """
+    mutation Update_movie_rate {
+        update_movie_rate(_id: "%s", _rate: %s) {
+            id
+            title
+            director
+            rating
+        }
+    }
+
+    """ % (movieid, rate)
+    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
 
 
 @app.route("/movies/<movieid>", methods=['DELETE'])
 def del_movie(movieid):
-    return request_service(requests.delete, f"http://{HOST}:{moviePort}/movies/{movieid}")
+
+    query = """
+    mutation Delete_movie {
+        delete_movie(_id: "%s") {
+            id
+            title
+            director
+            rating
+        }
+    }
+    """ % movieid
+    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
 
 
 # showtimes delegation
