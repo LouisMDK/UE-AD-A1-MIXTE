@@ -2,14 +2,30 @@ from flask import Flask, render_template, request, jsonify, make_response
 import requests
 import json
 
-app = Flask(__name__)
+import grpc
+import showtime_pb2
+import showtime_pb2_grpc
 
 PORT = 3201
-HOST = '0.0.0.0'
+HOST = '[::]'
 showtimePort = 3202
 
-with open('{}/databases/bookings.json'.format("."), "r") as jsf:
+app = Flask(__name__)
+
+with open('{}/data/bookings.json'.format("."), "r") as jsf:
     bookings = json.load(jsf)["bookings"]
+
+def run():
+    with grpc.insecure_channel(f"{HOST}:{showtimePort}") as channel:
+        showTimeStub = showtime_pb2_grpc.ShowTimesStub(channel)
+        
+        def get_schedule_by_date(strDate):
+            showTimeDate = showtime_pb2.Date(date = strDate)
+            movie = showTimeStub.GetScheduleByDate(showTimeDate)
+            
+            return "movie"
+        
+        get_schedule_by_date("20151130")
 
 
 @app.route("/", methods=['GET'])
@@ -64,5 +80,7 @@ def add_booking_byuser(userid: str):
 
 
 if __name__ == "__main__":
+    run()
     print("Server running in port %s" % (PORT))
     app.run(host=HOST, port=PORT)
+   
