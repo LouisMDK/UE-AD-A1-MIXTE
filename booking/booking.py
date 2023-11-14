@@ -8,6 +8,7 @@ import showtime_pb2_grpc
 
 PORT = 3201
 HOST = '[::]'
+showTimeHOST = "localhost"
 showtimePort = 3202
 
 app = Flask(__name__)
@@ -16,16 +17,20 @@ with open('{}/data/bookings.json'.format("."), "r") as jsf:
     bookings = json.load(jsf)["bookings"]
 
 def run():
-    with grpc.insecure_channel(f"{HOST}:{showtimePort}") as channel:
+    with grpc.insecure_channel(f"{showTimeHOST}:{showtimePort}") as channel:
         showTimeStub = showtime_pb2_grpc.ShowTimesStub(channel)
         
         def get_schedule_by_date(strDate):
             showTimeDate = showtime_pb2.Date(date = strDate)
-            movie = showTimeStub.GetScheduleByDate(showTimeDate)
-            
-            return "movie"
+            return showTimeStub.GetScheduleByDate(showTimeDate)
         
-        get_schedule_by_date("20151130")
+        def get_all_times():
+            times = []
+            showTimeEmpty = showtime_pb2.Empty()
+            allTime = showTimeStub.GetAllTimes(showTimeEmpty)
+            for time in allTime:
+                times += [time]
+            
 
 
 @app.route("/", methods=['GET'])
@@ -52,13 +57,17 @@ def add_booking_byuser(userid: str):
     req = request.get_json()
     movieid = str(req["movieid"])
     moviedate = str(req["date"])
+    
+
     try:
-        showtime = requests.get(f"http://{HOST}:{showtimePort}/showmovies/{moviedate}")
+        with grpc.insecure_channel(f"{showTimeHOST}:{showtimePort}") as channel:
+            showTimeStub = showtime_pb2_grpc.ShowTimesStub(channel)
+            showTimeDate = showtime_pb2.Date(date = moviedate)
+            showtime = showTimeStub.GetScheduleByDate(showTimeDate)
     except Exception as e:
-        # print(e)
         return make_response(jsonify({"error": f'error when requesting showtime'}), 400)
 
-    if showtime.status_code != 200 or movieid not in showtime.json()["movies"]:
+    if showtime.date == -1 or movieid not in showtime.movies:
         return make_response(jsonify({"error": "no showtime found for this booking"}), 400)
 
     booking = None

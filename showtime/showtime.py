@@ -24,6 +24,7 @@ class ShowTimesServicer(showtime_pb2_grpc.ShowTimesServicer):
         for schedule in self.db:
             if str(schedule["date"]) == str(request.date):
                 return showtime_pb2.Time(date=schedule["date"], movies = schedule["movies"])
+        return showtime_pb2.Time(date="-1", movies = [])
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
