@@ -3,7 +3,6 @@ import grpc
 from concurrent import futures
 import showtime_pb2
 import showtime_pb2_grpc
-from werkzeug.exceptions import NotFound
 
 PORT = 3202
 HOST = '[::]'

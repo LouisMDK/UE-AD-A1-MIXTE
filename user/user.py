@@ -251,7 +251,10 @@ def get_movies_bydate(date):
 
 @app.route("/user/bookings/<userid>", methods=['GET'])
 def get_user_bookings(userid):
-    return request_service(requests.get, f'http://{HOST}:{bookingPort}/bookings/{userid}')
+    for user in users:
+        if str(user["id"]) == str(id):
+            return request_service(requests.get, f'http://{HOST}:{bookingPort}/bookings/{userid}')
+    return make_response(jsonify({"error": "user ID don't exists"}), 400)
 
 
 if __name__ == "__main__":
