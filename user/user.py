@@ -62,7 +62,7 @@ def get_all():
 @app.route("/users", methods=['POST'])
 def create_user():
     req = request.get_json()
-    if (req["name"] is None):
+    if req["name"] is None:
         return make_response(jsonify({"error": "attribut name missing"}), 400)
     id = req["name"].lower().replace(" ", "_")
     for user in users:
@@ -112,6 +112,23 @@ def delete_user_by_id(id):
 
 
 # movie delegation
+
+
+@app.route("/movies", methods=["GET"])
+def get_all_movies():
+    query = """
+            query Movies {
+                movies {
+                    id
+                    title
+                    director
+                    rating
+                }
+            }
+            """
+
+    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
+
 
 @app.route("/movies/<movieid>", methods=['GET'])
 def get_movie_byid(movieid):
@@ -164,9 +181,28 @@ def get_movie_byDirector(movieDirector):
 
     return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
 
-@app.route("/movies/<movieid>", methods=['POST'])
-def create_movie(movieid):
-    return request_service(requests.post, f"http://{HOST}:{moviePort}/movies/{movieid}")
+@app.route("/movies", methods=['POST'])
+def create_movie():
+    req = request.get_json()
+
+    # check if all attributes are present in body
+    attributes = ['id', 'title', 'director', 'rating']
+    for attr in attributes:
+        if attr not in req:
+            return make_response(jsonify({'error': f'Attribute {attr} not present in body'}))
+
+    query = """
+    mutation Create_movie {
+    create_movie(_id: "%s", _title: "%s", _director: "%s", _rating: %s) {
+            id
+            title
+            director
+            rating
+        }
+    }
+    """ % (req['id'], req['title'], req['director'], req['rating'])
+
+    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
 
 
 @app.route("/movies/<movieid>/<rate>", methods=['PUT'])
