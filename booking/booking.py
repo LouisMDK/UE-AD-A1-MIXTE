@@ -48,14 +48,14 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
             return booking_pb2.Book(userid = "-1", dates = [])
 
         booking = None
-        for el in bookings:
-            if str(el["userid"]) == str(userid):
+        for el in self.db:
+            if str(el["userid"]) == str(request.userid):
                 booking = el
                 break
 
         if booking is None:
             booking = {
-                "userid": userid,
+                "userid": request.userid,
                 "dates": [
                 ]
             }
@@ -63,12 +63,12 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
             for date in booking["dates"]:
                 if str(date["date"]) == moviedate:
                     date["movies"].append(movieid)
-                    return booking_pb2.Book(userid = userid, dates =  [booking_pb2.BookingDate(date=daty.dates, movies = daty.movies) for daty in booking.dates])
+                    return booking_pb2.Book(userid = request.userid, dates =  [booking_pb2.BookingDate(date=daty.dates, movies = daty.movies) for daty in booking.dates])
 
         
 
         booking["dates"].append({"date": moviedate, "movies": [movieid]})
-        return booking_pb2.Book(userid = userid, dates = [booking_pb2.BookingDate(date=daty.dates, movies = daty.movies) for daty in booking.dates])
+        return booking_pb2.Book(userid = request.userid, dates = [booking_pb2.BookingDate(date=daty.dates, movies = daty.movies) for daty in booking.dates])
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))

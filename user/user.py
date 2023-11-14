@@ -4,14 +4,14 @@ import time
 from flask import Flask, render_template, request, jsonify, make_response
 import requests
 import json
-from werkzeug.exceptions import NotFound
+
+
 
 # CALLING gRPC requests
 import grpc
 from concurrent import futures
-
-# import booking_pb2
-# import booking_pb2_grpc
+import booking_pb2
+import booking_pb2_grpc
 # import movie_pb2
 # import movie_pb2_grpc
 
@@ -27,6 +27,7 @@ app = Flask(__name__)
 PORT = 3203
 HOST = '0.0.0.0'
 moviePort = 3200
+bookingHOST = "localhost"
 bookingPort = 3201
 showtime = 3202
 
@@ -248,14 +249,39 @@ def get_schedule():
 def get_movies_bydate(date):
     return request_service(requests.get, f"http://{HOST}:{showtime}/showtimes/{date}")
 
+@app.route("/bookings", methods=['GET'])
+def get_all_user_bookings():
+    # try:
+        with grpc.insecure_channel(f"{bookingHOST}:{bookingPort}") as channel:
+            bookingStub = booking_pb2_grpc.BookingStub(channel)
+            booking = []
+            allBooking = bookingStub.GetAllBookings(booking_pb2.EmptyForBooking())
+            for book in allBooking:
+                booking += [book]
+            return booking
+    # except Exception as e:
+    #     return make_response(jsonify({"error": "unreachable service"}), 500)
 
-@app.route("/user/bookings/<userid>", methods=['GET'])
+@app.route("/bookings/<userid>", methods=['GET'])
 def get_user_bookings(userid):
-    for user in users:
-        if str(user["id"]) == str(id):
-            return request_service(requests.get, f'http://{HOST}:{bookingPort}/bookings/{userid}')
-    return make_response(jsonify({"error": "user ID don't exists"}), 400)
+    try:
+        with grpc.insecure_channel(f"{bookingHOST}:{bookingPort}") as channel:
+            bookingStub = booking_pb2_grpc.BookingStub(channel)
+            userBooking = bookingStub.GetBookingByUser(booking_pb2.User(userid = userid))
+            return userBooking
+    except Exception as e:
+        return make_response(jsonify({"error": "unreachable service"}), 500)
 
+@app.route("/bookings/<userid>", methods=['POST'])
+def get_add_user_booking():
+    req = request.get_json()
+    try:
+        with grpc.insecure_channel(f"{bookingHOST}:{bookingPort}") as channel:
+            bookingStub = booking_pb2_grpc.BookingStub(channel)
+            userBooking = bookingStub.GetBookingByUser(booking_pb2.AddBooker(userid = userid, movieid = req.movieid, date = req.date))
+            return userBooking
+    except Exception as e:
+        return make_response(jsonify({"error": "unreachable service"}), 500)
 
 if __name__ == "__main__":
     print("Server running in port %s" % (PORT))
