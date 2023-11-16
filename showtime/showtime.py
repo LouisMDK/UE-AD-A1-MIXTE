@@ -1,11 +1,5 @@
 import json
-import time
-
 import grpc
-from concurrent import futures
-
-from flask import Flask
-
 import showtime_pb2
 import showtime_pb2_grpc
 import os
@@ -29,6 +23,7 @@ class ShowTimesServicer(showtime_pb2_grpc.ShowTimesServicer):
         for schedule in self.db:
             if str(schedule["date"]) == str(request.date):
                 return showtime_pb2.Time(date=schedule["date"], movies=schedule["movies"])
+        return showtime_pb2.Time(date="-1", movies=[])
 
 
 async def serve():
@@ -39,6 +34,7 @@ async def serve():
     print(f"Server running on {host}:{showtimePort}")
     await server.start()
     await server.wait_for_termination()
-    
+
+
 if __name__ == '__main__':
     asyncio.run(serve())

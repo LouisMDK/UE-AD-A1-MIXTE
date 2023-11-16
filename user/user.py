@@ -1,20 +1,12 @@
 # REST API
 import os
-import time
 
-from flask import Flask, render_template, request, jsonify, make_response
-import requests
-import json
-from werkzeug.exceptions import NotFound
+
 
 # CALLING gRPC requests
 import grpc
-from concurrent import futures
-
-# import booking_pb2
-# import booking_pb2_grpc
-# import movie_pb2
-# import movie_pb2_grpc
+import booking_pb2
+import booking_pb2_grpc
 
 # CALLING GraphQL requests
 # todo to complete
@@ -41,12 +33,14 @@ def request_service(method, path):
     except Exception as e:
         return make_response(jsonify({"error": str(e)}), 500)
 
+
 def request_graphql(path, query):
     try:
         req = requests.post(path, json={'query': query})
         return make_response(jsonify(req.json()), req.status_code)
     except Exception as e:
         return make_response(jsonify({"error": str(e)}), 500)
+
 
 with open('{}/data/users.json'.format("."), "r") as jsf:
     users = json.load(jsf)["users"]
@@ -184,6 +178,7 @@ def get_movie_byDirector(movieDirector):
 
     return request_graphql(f"http://{movieHost}:{moviePort}/graphql", query)
 
+
 @app.route("/movies", methods=['POST'])
 def create_movie():
     req = request.get_json()
@@ -226,7 +221,6 @@ def update_movie_rating(movieid, rate):
 
 @app.route("/movies/<movieid>", methods=['DELETE'])
 def del_movie(movieid):
-
     query = """
     mutation Delete_movie {
         delete_movie(_id: "%s") {
@@ -252,9 +246,43 @@ def get_movies_bydate(date):
     return request_service(requests.get, f"http://{showtimeHost}:{showtimePort}/showtimes/{date}")
 
 
-@app.route("/user/bookings/<userid>", methods=['GET'])
+@app.route("/bookings", methods=['GET'])
+def get_all_user_bookings():
+    # try:
+    with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
+        bookingStub = booking_pb2_grpc.BookingStub(channel)
+        booking = []
+        allBooking = bookingStub.GetAllBookings(booking_pb2.EmptyForBooking())
+        for book in allBooking:
+            booking += [book]
+        return booking
+
+
+# except Exception as e:
+#     return make_response(jsonify({"error": "unreachable service"}), 500)
+
+@app.route("/bookings/<userid>", methods=['GET'])
 def get_user_bookings(userid):
-    return request_service(requests.get, f'http://{bookingHost}:{bookingPort}/bookings/{userid}')
+    try:
+        with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
+            bookingStub = booking_pb2_grpc.BookingStub(channel)
+            userBooking = bookingStub.GetBookingByUser(booking_pb2.User(userid=userid))
+            return userBooking
+    except Exception as e:
+        return make_response(jsonify({"error": "unreachable service"}), 500)
+
+
+@app.route("/bookings/<userid>", methods=['POST'])
+def add_user_booking(userid):
+    req = request.get_json()
+    try:
+        with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
+            bookingStub = booking_pb2_grpc.BookingStub(channel)
+            userBooking = bookingStub.GetBookingByUser(
+                booking_pb2.AddBooker(userid=userid, movieid=req.movieid, date=req.date))
+            return userBooking
+    except Exception as e:
+        return make_response(jsonify({"error": "unreachable service"}), 500)
 
 
 if __name__ == "__main__":
