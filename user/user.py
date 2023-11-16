@@ -1,12 +1,11 @@
 # REST API
 import os
 
-
-
 # CALLING gRPC requests
 import grpc
 import booking_pb2
 import booking_pb2_grpc
+from google.protobuf.json_format import MessageToDict
 
 # CALLING GraphQL requests
 # todo to complete
@@ -247,29 +246,27 @@ def get_movies_bydate(date):
 
 
 @app.route("/bookings", methods=['GET'])
-def get_all_user_bookings():
-    # try:
-    with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
-        bookingStub = booking_pb2_grpc.BookingStub(channel)
-        booking = []
-        allBooking = bookingStub.GetAllBookings(booking_pb2.EmptyForBooking())
-        for book in allBooking:
-            booking += [book]
-        return booking
+def get_all_bookings():
+    try:
+        with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
+            bookingStub = booking_pb2_grpc.BookingStub(channel)
+            bookings = bookingStub.GetAllBookings(booking_pb2.EmptyForBooking())
+            response = [MessageToDict(book, including_default_value_fields=True) for book in bookings]
+            return jsonify(response), 200
+    except Exception as e:
+        return make_response(jsonify({"error": str(e)}), 500)
 
-
-# except Exception as e:
-#     return make_response(jsonify({"error": "unreachable service"}), 500)
 
 @app.route("/bookings/<userid>", methods=['GET'])
 def get_user_bookings(userid):
     try:
         with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
             bookingStub = booking_pb2_grpc.BookingStub(channel)
-            userBooking = bookingStub.GetBookingByUser(booking_pb2.User(userid=userid))
-            return userBooking
+            bookings = bookingStub.GetBookingByUser(booking_pb2.User(userid=userid))
+            response = [MessageToDict(book, including_default_value_fields=True) for book in bookings]
+            return jsonify(response), 200
     except Exception as e:
-        return make_response(jsonify({"error": "unreachable service"}), 500)
+        return make_response(jsonify({"error": str(e)}), 500)
 
 
 @app.route("/bookings/<userid>", methods=['POST'])
@@ -278,11 +275,12 @@ def add_user_booking(userid):
     try:
         with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
             bookingStub = booking_pb2_grpc.BookingStub(channel)
-            userBooking = bookingStub.GetBookingByUser(
-                booking_pb2.AddBooker(userid=userid, movieid=req.movieid, date=req.date))
-            return userBooking
+            bookings = bookingStub.GetBookingByUser(
+                booking_pb2.AddBooker(userid=userid, movieid=req['movieid'], date=req['date']))
+            response = [MessageToDict(book, including_default_value_fields=True) for book in bookings]
+            return jsonify(response), 200
     except Exception as e:
-        return make_response(jsonify({"error": "unreachable service"}), 500)
+        return make_response(jsonify({"error": str(e)}), 500)
 
 
 if __name__ == "__main__":
