@@ -1,4 +1,5 @@
 # REST API
+import os
 import time
 
 from flask import Flask, render_template, request, jsonify, make_response
@@ -24,11 +25,13 @@ import json
 
 app = Flask(__name__)
 
-PORT = 3203
-HOST = '0.0.0.0'
-moviePort = 3200
-bookingPort = 3201
-showtime = 3202
+movieHost = os.environ["MOVIE_HOST"]
+showtimeHost = os.environ["SHOWTIME_HOST"]
+bookingHost = os.environ["BOOKING_HOST"]
+userPort = int(os.environ['USER_PORT'])
+moviePort = int(os.environ['MOVIE_PORT'])
+bookingPort = int(os.environ['BOOKING_PORT'])
+showtimePort = int(os.environ['SHOWTIME_PORT'])
 
 
 def request_service(method, path):
@@ -127,7 +130,7 @@ def get_all_movies():
             }
             """
 
-    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
+    return request_graphql(f"http://{movieHost}:{moviePort}/graphql", query)
 
 
 @app.route("/movies/<movieid>", methods=['GET'])
@@ -143,7 +146,7 @@ def get_movie_byid(movieid):
         }
         """ % movieid
 
-    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
+    return request_graphql(f"http://{movieHost}:{moviePort}/graphql", query)
 
 
 @app.route("/moviesbytitle", methods=['GET'])
@@ -163,7 +166,7 @@ def get_movie_bytitle():
             }
         } 
     """ % title
-    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
+    return request_graphql(f"http://{movieHost}:{moviePort}/graphql", query)
 
 
 @app.route("/moviesbyDirector/<movieDirector>", methods=['GET'])
@@ -179,7 +182,7 @@ def get_movie_byDirector(movieDirector):
         }  
            """ % movieDirector
 
-    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
+    return request_graphql(f"http://{movieHost}:{moviePort}/graphql", query)
 
 @app.route("/movies", methods=['POST'])
 def create_movie():
@@ -202,7 +205,7 @@ def create_movie():
     }
     """ % (req['id'], req['title'], req['director'], req['rating'])
 
-    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
+    return request_graphql(f"http://{movieHost}:{moviePort}/graphql", query)
 
 
 @app.route("/movies/<movieid>/<rate>", methods=['PUT'])
@@ -218,7 +221,7 @@ def update_movie_rating(movieid, rate):
     }
 
     """ % (movieid, rate)
-    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
+    return request_graphql(f"http://{movieHost}:{moviePort}/graphql", query)
 
 
 @app.route("/movies/<movieid>", methods=['DELETE'])
@@ -234,26 +237,26 @@ def del_movie(movieid):
         }
     }
     """ % movieid
-    return request_graphql(f"http://{HOST}:{moviePort}/graphql", query)
+    return request_graphql(f"http://{movieHost}:{moviePort}/graphql", query)
 
 
 # showtimes delegation
 
 @app.route("/showtimes", methods=['GET'])
 def get_schedule():
-    return request_service(requests.get, f"http://{HOST}:{showtime}/showtimes")
+    return request_service(requests.get, f"http://{showtimeHost}:{showtimePort}/showtimes")
 
 
 @app.route("/showmovies/<date>", methods=['GET'])
 def get_movies_bydate(date):
-    return request_service(requests.get, f"http://{HOST}:{showtime}/showtimes/{date}")
+    return request_service(requests.get, f"http://{showtimeHost}:{showtimePort}/showtimes/{date}")
 
 
 @app.route("/user/bookings/<userid>", methods=['GET'])
 def get_user_bookings(userid):
-    return request_service(requests.get, f'http://{HOST}:{bookingPort}/bookings/{userid}')
+    return request_service(requests.get, f'http://{bookingHost}:{bookingPort}/bookings/{userid}')
 
 
 if __name__ == "__main__":
-    print("Server running in port %s" % (PORT))
-    app.run(host=HOST, port=PORT)
+    print("Server running in port %s" % (userPort))
+    app.run(host='0.0.0.0', port=userPort)

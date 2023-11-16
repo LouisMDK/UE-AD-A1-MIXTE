@@ -1,10 +1,15 @@
 from ariadne import graphql_sync, make_executable_schema, load_schema_from_path, ObjectType, QueryType, MutationType
 from flask import Flask, request, jsonify, make_response
+import os
 
 import resolvers as r
 
-PORT = 3200
-HOST = '0.0.0.0'
+userPort = int(os.environ['USER_PORT'])
+moviePort = int(os.environ['MOVIE_PORT'])
+bookingPort = int(os.environ['BOOKING_PORT'])
+showtimePort = int(os.environ['SHOWTIME_PORT'])
+
+
 app = Flask(__name__)
 
 # create elements for Ariadne
@@ -51,5 +56,5 @@ def graphql_server():
 
 
 if __name__ == "__main__":
-    print("Server running in port %s" % (PORT))
-    app.run(host=HOST, port=PORT)
+    print("Server running in port %s" % (moviePort))
+    app.run(host='0.0.0.0', port=moviePort)

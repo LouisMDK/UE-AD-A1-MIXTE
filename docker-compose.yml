@@ -1,0 +1,41 @@
+version: '3.4'
+
+services:
+  time:
+    build: ./showtime
+    container_name: time
+    env_file:
+      - .env
+    networks:
+      - archid
+  booking:
+    build: ./booking
+    container_name: booking
+    env_file:
+      - .env
+    networks:
+      - archid
+    depends_on:
+      - time
+  movie:
+    build: ./movie
+    container_name: movie
+    env_file:
+      - .env
+    networks:
+      - archid
+  user:
+    build: ./user
+    container_name: user
+    ports:
+      - "127.0.0.1:5004:5004"
+    env_file:
+      - .env
+    networks:
+      - archid
+    depends_on:
+      - movie
+      - booking
+
+networks:
+  archid:

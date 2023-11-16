@@ -7,7 +7,7 @@ import showtime_pb2
 import showtime_pb2_grpc
 
 PORT = 3201
-HOST = '[::]'
+HOST = '127.0.0.1'
 showtimePort = 3202
 
 app = Flask(__name__)
@@ -15,16 +15,17 @@ app = Flask(__name__)
 with open('{}/data/bookings.json'.format("."), "r") as jsf:
     bookings = json.load(jsf)["bookings"]
 
+
 def run():
     with grpc.insecure_channel(f"{HOST}:{showtimePort}") as channel:
         showTimeStub = showtime_pb2_grpc.ShowTimesStub(channel)
-        
+
         def get_schedule_by_date(strDate):
-            showTimeDate = showtime_pb2.Date(date = strDate)
+            showTimeDate = showtime_pb2.Date(date=strDate)
             movie = showTimeStub.GetScheduleByDate(showTimeDate)
-            
+
             return "movie"
-        
+
         get_schedule_by_date("20151130")
 
 
@@ -52,6 +53,7 @@ def add_booking_byuser(userid: str):
     req = request.get_json()
     movieid = str(req["movieid"])
     moviedate = str(req["date"])
+
     try:
         showtime = requests.get(f"http://{HOST}:{showtimePort}/showmovies/{moviedate}")
     except Exception as e:
@@ -80,7 +82,6 @@ def add_booking_byuser(userid: str):
 
 
 if __name__ == "__main__":
-    run()
+    # run()
     print("Server running in port %s" % (PORT))
     app.run(host=HOST, port=PORT)
-   
