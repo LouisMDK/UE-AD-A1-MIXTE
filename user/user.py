@@ -291,7 +291,7 @@ def add_user_booking(userid):
     try:
         with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
             bookingStub = booking_pb2_grpc.BookingStub(channel)
-            booking = bookingStub.GetBookingByUser(
+            booking = bookingStub.AddBookingByUser(
                 booking_pb2.AddBooker(userid=userid, movieid=req['movieid'], date=req['date']))
             response = MessageToDict(booking, including_default_value_fields=True)
             return jsonify(response), 200
