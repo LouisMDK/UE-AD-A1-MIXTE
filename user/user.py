@@ -262,8 +262,8 @@ def get_user_bookings(userid):
     try:
         with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
             bookingStub = booking_pb2_grpc.BookingStub(channel)
-            bookings = bookingStub.GetBookingByUser(booking_pb2.User(userid=userid))
-            response = [MessageToDict(book, including_default_value_fields=True) for book in bookings]
+            booking = bookingStub.GetBookingByUser(booking_pb2.User(userid=userid))
+            response = MessageToDict(booking, including_default_value_fields=True)
             return jsonify(response), 200
     except Exception as e:
         return make_response(jsonify({"error": str(e)}), 500)
@@ -275,9 +275,9 @@ def add_user_booking(userid):
     try:
         with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
             bookingStub = booking_pb2_grpc.BookingStub(channel)
-            bookings = bookingStub.GetBookingByUser(
+            booking = bookingStub.GetBookingByUser(
                 booking_pb2.AddBooker(userid=userid, movieid=req['movieid'], date=req['date']))
-            response = [MessageToDict(book, including_default_value_fields=True) for book in bookings]
+            response = MessageToDict(booking, including_default_value_fields=True)
             return jsonify(response), 200
     except Exception as e:
         return make_response(jsonify({"error": str(e)}), 500)

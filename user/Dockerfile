@@ -11,4 +11,6 @@ RUN pip3 install -r requirements.txt
 
 ADD . .
 
+ENV PYTHONUNBUFFERED=1
+
 ENTRYPOINT ["python3", "user.py"]
