@@ -25,7 +25,6 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
 
     def GetAllBookings(self, request, context):
         for book in self.db:
-            print(book)
             yield booking_pb2.Book(userid=book['userid'],
                                    dates=[booking_pb2.BookingDate(date=daty['date'], movies=daty['movies']) for daty in
                                           book['dates']])
@@ -37,7 +36,7 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
                                         dates=[booking_pb2.BookingDate(date=daty['date'], movies=daty['movies']) for
                                                daty in
                                                book['dates']])
-        return booking_pb2.Book(userid="-1", dates=[])
+        return booking_pb2.Book(userid="", dates=[])
 
     def AddBookingByUser(self, request, context):
         movieid = request.movieid
@@ -54,36 +53,37 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
         if showtime.date == -1 or movieid not in showtime.movies:
             return booking_pb2.Book(userid="", dates=[])
 
-        user = None
-        for userBooking in self.db:
+        userIndex = None
+        for i, userBooking in enumerate(self.db):
             if str(userBooking["userid"]) == str(request.userid):
-                user = userBooking
+                userIndex = i
                 break
 
-        if user is None:
+        if userIndex is None:
             user = {'userid': request.userid, 'dates': []}
             self.db.append(user)
+            userIndex = len(self.db) - 1
 
-        date = None
-        for userDate in user['dates']:
-            if userDate["date"] == request.date:
-                date = userDate
+        dateIndex = None
+        for i, userDate in enumerate(self.db[userIndex]['dates']):
+            if str(userDate["date"]) == str(request.date):
+                dateIndex = i
                 break
 
-        if date is None:
+        if dateIndex is None:
             date = {'date': request.date, 'movies': []}
+            self.db[userIndex]['dates'].append(date)
+            dateIndex = len(self.db[userIndex]['dates']) - 1
 
-        date['movies'].append(request.movieid)
-        user['dates'].append(date)
-
-        with open('{}/data/bookings.json'.format("."), "r") as jsf:
+        self.db[userIndex]['dates'][dateIndex]['movies'].append(request.movieid)
+        with open('{}/data/bookings.json'.format("."), "w") as jsf:
             json.dump(self.db, jsf)
 
         return booking_pb2.Book(userid=request.userid,
                                 dates=[booking_pb2.BookingDate(
-                                    date=userDate['date'],
-                                    movies=userDate['movies']
-                                ) for userDate in user['dates']])
+                                    date=self.db[userIndex]['dates'][index]['date'],
+                                    movies=self.db[userIndex]['dates'][index]['movies']
+                                ) for index in range(len(self.db[userIndex]['dates']))])
 
 
 def serve():
