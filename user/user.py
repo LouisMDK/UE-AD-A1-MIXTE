@@ -5,6 +5,8 @@ import os
 import grpc
 import booking_pb2
 import booking_pb2_grpc
+import showtime_pb2
+import showtime_pb2_grpc
 from google.protobuf.json_format import MessageToDict
 
 # CALLING GraphQL requests
@@ -237,13 +239,27 @@ def del_movie(movieid):
 
 @app.route("/showtimes", methods=['GET'])
 def get_schedule():
-    return request_service(requests.get, f"http://{showtimeHost}:{showtimePort}/showtimes")
-
+    try:
+        with grpc.insecure_channel(f"{showtimeHost}:{showtimePort}") as channel:
+            showTimeStub = showtime_pb2_grpc.ShowTimesStub(channel)
+            showtimes = showTimeStub.GetAllTimes(showtime_pb2.Empty())
+            response = [MessageToDict(times, including_default_value_fields=True) for times in showtimes]
+            return jsonify(response), 200
+    except Exception as e:
+        return make_response(jsonify({"error": str(e)}), 500)
 
 @app.route("/showmovies/<date>", methods=['GET'])
 def get_movies_bydate(date):
-    return request_service(requests.get, f"http://{showtimeHost}:{showtimePort}/showtimes/{date}")
+    try:
+        with grpc.insecure_channel(f"{showtimeHost}:{showtimePort}") as channel:
+            showTimeStub = showtime_pb2_grpc.ShowTimesStub(channel)
+            showtimes = showTimeStub.GetScheduleByDate(showtime_pb2.Date(date=date))
+            response = MessageToDict(showtimes, including_default_value_fields=True)
+            return jsonify(response), 200
+    except Exception as e:
+        return make_response(jsonify({"error": str(e)}), 500)
 
+# bookings delegation
 
 @app.route("/bookings", methods=['GET'])
 def get_all_bookings():
