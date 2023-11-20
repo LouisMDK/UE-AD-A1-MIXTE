@@ -1,9 +1,10 @@
 import json
+from concurrent import futures
+
 import grpc
 import showtime_pb2
 import showtime_pb2_grpc
 import os
-import asyncio
 
 showtimePort = int(os.environ['SHOWTIME_PORT'])
 
@@ -26,15 +27,15 @@ class ShowTimesServicer(showtime_pb2_grpc.ShowTimesServicer):
         return showtime_pb2.Time(date="-1", movies=[])
 
 
-async def serve():
+def serve():
     host = "[::]"
-    server = grpc.aio.server()
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     showtime_pb2_grpc.add_ShowTimesServicer_to_server(ShowTimesServicer(), server)
     server.add_insecure_port(f"{host}:{showtimePort}")
     print(f"Server running on {host}:{showtimePort}")
-    await server.start()
-    await server.wait_for_termination()
+    server.start()
+    server.wait_for_termination()
 
 
 if __name__ == '__main__':
-    asyncio.run(serve())
+    serve()

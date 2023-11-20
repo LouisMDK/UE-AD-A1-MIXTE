@@ -76,6 +76,9 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
         date['movies'].append(request.movieid)
         user['dates'].append(date)
 
+        with open('{}/data/bookings.json'.format("."), "r") as jsf:
+            json.dump(self.db, jsf)
+
         return booking_pb2.Book(userid=request.userid,
                                 dates=[booking_pb2.BookingDate(
                                     date=userDate['date'],
