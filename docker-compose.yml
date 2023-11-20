@@ -8,6 +8,8 @@ services:
       - .env
     networks:
       - archid
+    ports:
+      - "127.0.0.1:5001:80"
   booking:
     build: ./booking
     container_name: booking
@@ -17,6 +19,8 @@ services:
       - archid
     depends_on:
       - time
+    ports:
+      - "127.0.0.1:5002:80"
   movie:
     build: ./movie
     container_name: movie
@@ -24,6 +28,8 @@ services:
       - .env
     networks:
       - archid
+    ports:
+      - "127.0.0.1:5003:80"
   user:
     build: ./user
     container_name: user
