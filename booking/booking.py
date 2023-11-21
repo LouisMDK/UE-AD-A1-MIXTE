@@ -70,15 +70,16 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
             return booking_pb2.Book(userid="-1", dates=[])
 
         # get user or creating it if don't already exist
-        user = None
-        for userBooking in self.db:
+        userIndex = None
+        for i, userBooking in enumerate(self.db):
             if str(userBooking["userid"]) == str(request.userid):
-                user = userBooking
+                userIndex = i
                 break
 
-        if user is None:
+        if userIndex is None:
             user = {'userid': request.userid, 'dates': []}
             self.db.append(user)
+            userIndex = len(self.db) - 1
 
         # get date or creating it if don't already exist
         date = None
@@ -87,8 +88,10 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
                 date = userDate
                 break
 
-        if date is None:
+        if dateIndex is None:
             date = {'date': request.date, 'movies': []}
+            self.db[userIndex]['dates'].append(date)
+            dateIndex = len(self.db[userIndex]['dates']) - 1
 
         date['movies'].append(request.movieid)
         user['dates'].append(date)
@@ -100,9 +103,9 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
         # like in REST convention, returning the just created object
         return booking_pb2.Book(userid=request.userid,
                                 dates=[booking_pb2.BookingDate(
-                                    date=userDate['date'],
-                                    movies=userDate['movies']
-                                ) for userDate in user['dates']])
+                                    date=self.db[userIndex]['dates'][index]['date'],
+                                    movies=self.db[userIndex]['dates'][index]['movies']
+                                ) for index in range(len(self.db[userIndex]['dates']))])
 
 
 def serve():
