@@ -18,6 +18,8 @@ import json
 
 app = Flask(__name__)
 
+### config var ###
+
 movieHost = os.environ["MOVIE_HOST"]
 showtimeHost = os.environ["SHOWTIME_HOST"]
 bookingHost = os.environ["BOOKING_HOST"]
@@ -26,15 +28,10 @@ moviePort = int(os.environ['MOVIE_PORT'])
 bookingPort = int(os.environ['BOOKING_PORT'])
 showtimePort = int(os.environ['SHOWTIME_PORT'])
 
-
-def request_service(method, path):
-    try:
-        req = method(path, json=request.get_json())
-        return make_response(jsonify(req.json()), req.status_code)
-    except Exception as e:
-        return make_response(jsonify({"error": str(e)}), 500)
+###            ###
 
 
+# function for avoid code repetition
 def request_graphql(path, query):
     try:
         req = requests.post(path, json={'query': query})
@@ -51,12 +48,13 @@ with open('{}/data/users.json'.format("."), "r") as jsf:
 def home():
     return "<h1 style='color:blue'>Welcome to the User service!</h1>"
 
-
+# return all user
 @app.route("/users", methods=['GET'])
 def get_all():
     return make_response(jsonify(users), 200)
 
 
+# create a new user
 @app.route("/users", methods=['POST'])
 def create_user():
     req = request.get_json()
@@ -77,6 +75,7 @@ def create_user():
     return make_response(jsonify(res), 200)
 
 
+# get a user by an id
 @app.route("/users/<id>", methods=['GET'])
 def get_user_byid(id):
     for user in users:
@@ -85,6 +84,7 @@ def get_user_byid(id):
     return make_response(jsonify({"error": "user ID don't exists"}), 400)
 
 
+# create or update the user by the id given
 @app.route("/users/<id>", methods=['PUT'])
 def create_update_user(id):
     req = request.get_json()
@@ -98,7 +98,7 @@ def create_update_user(id):
     req["id"] = id
     return create_user()
 
-
+# delete a user by an id
 @app.route("/users/<id>", methods=['DELETE'])
 def delete_user_by_id(id):
     for i, user in enumerate(users):
@@ -185,8 +185,7 @@ def create_movie():
     req = request.get_json()
 
     # check if all attributes are present in body
-    attributes = ['id', 'title', 'director', 'rating']
-    for attr in attributes:
+    for attr in ['id', 'title', 'director', 'rating']:
         if attr not in req:
             return make_response(jsonify({'error': f'Attribute {attr} not present in body'}))
 

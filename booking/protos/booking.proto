@@ -1,19 +1,34 @@
 syntax = "proto3";
 
+// Specify Routes Signature for our service Booking
+
 service Booking {
     rpc GetAllBookings(EmptyForBooking) returns (stream Book) {}
     rpc GetBookingByUser(User) returns (Book) {}
     rpc AddBookingByUser(AddBooker) returns (Book) {}
 }
 
+// Book represent the entitie store in our DB
+
 message Book {
     string userid = 1;
     repeated BookingDate dates = 2;
 }
 
+// BookingDate represent a bellow attribut of Book
+
+message BookingDate {
+    string date = 1;
+    repeated string movies = 2;
+}
+
+// Argument for a user id
+
 message User {
     string userid = 1;
 }
+
+// Argument for add a Book
 
 message AddBooker{
     string userid = 1;
@@ -21,16 +36,7 @@ message AddBooker{
     string date = 3;
 }
 
-message BookingAdder {
-    string userid = 1;
-    string movieid = 2;
-    string date = 3;
-}
-
-message BookingDate {
-    string date = 1;
-    repeated string movies = 2;
-}
+// Empty message (ForBooking for avoiding overlaps)
 
 message EmptyForBooking {
 }

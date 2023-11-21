@@ -16,11 +16,11 @@ def create_movie(_, info, _id, _title, _director, _rating):
             if movie['id'] == _id:
                 return new
         new = {'id': _id, 'title': _title, 'director': _director, 'rating': _rating}
-        newmovies['movies'].append(
-            new
-        )
+        newmovies['movies'].append(new)
+    
     if new is not None:
         with open('{}/data/movies.json'.format("."), "w") as wfile:
+            # save change in data
             json.dump(newmovies, wfile)
     return new
 

@@ -10,50 +10,66 @@ from concurrent import futures
 import booking_pb2
 import booking_pb2_grpc
 
+### config var ###
+
 bookingHost = os.environ["BOOKING_HOST"]
 bookingPort = int(os.environ['BOOKING_PORT'])
 showtimeHost = os.environ["SHOWTIME_HOST"]
 showtimePort = int(os.environ['SHOWTIME_PORT'])
 
+###            ###
 
+
+# Servicer giving definition of our API routes #
 class BookingServicer(booking_pb2_grpc.BookingServicer):
 
     def __init__(self):
         with open('{}/data/bookings.json'.format("."), "r") as jsf:
             self.db = json.load(jsf)["bookings"]
-        super().__init__()  # useless as the super class have no constructor
+        # super().__init__() would be useless as the super class have no constructor
+
 
     def GetAllBookings(self, request, context):
         for book in self.db:
-            print(book)
-            yield booking_pb2.Book(userid=book['userid'],
-                                   dates=[booking_pb2.BookingDate(date=daty['date'], movies=daty['movies']) for daty in
-                                          book['dates']])
+            yield booking_pb2.Book(
+                userid=book['userid'],
+                dates=[
+                    booking_pb2.BookingDate(date=daty['date'], movies=daty['movies']) for daty in book['dates']
+                ]
+            )
+
 
     def GetBookingByUser(self, request, context):
         for book in self.db:
             if str(book["userid"]) == str(request.userid):
-                return booking_pb2.Book(userid=book['userid'],
-                                        dates=[booking_pb2.BookingDate(date=daty['date'], movies=daty['movies']) for
-                                               daty in
-                                               book['dates']])
+                return booking_pb2.Book(
+                    userid=book['userid'],
+                    dates=[
+                        booking_pb2.BookingDate(date=daty['date'], movies=daty['movies']) for daty in book['dates']
+                    ]
+                )
+        # if user id not found in book, returning an error object, with userId to -1
         return booking_pb2.Book(userid="-1", dates=[])
 
     def AddBookingByUser(self, request, context):
         movieid = request.movieid
         moviedate = request.date
 
+        # verify the booking is available in the showtime servicer
         try:
             with grpc.insecure_channel(f"{showtimeHost}:{showtimePort}") as channel:
                 showTimeStub = showtime_pb2_grpc.ShowTimesStub(channel)
                 showTimeDate = showtime_pb2.Date(date=moviedate)
                 showtime = showTimeStub.GetScheduleByDate(showTimeDate)
         except Exception as e:
-            return booking_pb2.Book(userid="", dates=[])
+            # if booking can't be done, returning an error object, with userId to -1
+            return booking_pb2.Book(userid="-1", dates=[])
 
         if showtime.date == -1 or movieid not in showtime.movies:
-            return booking_pb2.Book(userid="", dates=[])
+            # if booking can't be done, returning an error object, with userId to -1
+            return booking_pb2.Book(userid="-1", dates=[])
 
+        # get user or creating it if don't already exist
         user = None
         for userBooking in self.db:
             if str(userBooking["userid"]) == str(request.userid):
@@ -64,6 +80,7 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
             user = {'userid': request.userid, 'dates': []}
             self.db.append(user)
 
+        # get date or creating it if don't already exist
         date = None
         for userDate in user['dates']:
             if userDate["date"] == request.date:
@@ -76,9 +93,11 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
         date['movies'].append(request.movieid)
         user['dates'].append(date)
 
+        # save change in data
         with open('{}/data/bookings.json'.format("."), "r") as jsf:
             json.dump(self.db, jsf)
 
+        # like in REST convention, returning the just created object
         return booking_pb2.Book(userid=request.userid,
                                 dates=[booking_pb2.BookingDate(
                                     date=userDate['date'],

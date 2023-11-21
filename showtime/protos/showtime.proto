@@ -1,18 +1,26 @@
 syntax = "proto3";
 
+// Specify Routes Signature for our service ShowTimes
+
 service ShowTimes {
     rpc GetAllTimes(Empty) returns (stream Time) {}
     rpc GetScheduleByDate(Date) returns (Time) {}
 }
 
+// Argument for a date
+
 message Date {
     string date = 1;
 }
+
+// Time represent the entitie store in our DB
 
 message Time {
     string date = 1;
     repeated string movies = 2;
 }
+
+// Empty message
 
 message Empty {
 }

@@ -4,16 +4,21 @@ import os
 
 import resolvers as r
 
+### config var ###
+
 userPort = int(os.environ['USER_PORT'])
 moviePort = int(os.environ['MOVIE_PORT'])
 bookingPort = int(os.environ['BOOKING_PORT'])
 showtimePort = int(os.environ['SHOWTIME_PORT'])
 
+###            ###
 
 app = Flask(__name__)
 
 # create elements for Ariadne
 type_defs = load_schema_from_path('movie.graphql')
+
+### graphQL config ###
 
 query = QueryType()
 movie = ObjectType('Movie')
@@ -32,15 +37,15 @@ actor = ObjectType('Actor')
 movie.set_field('actors', r.resolve_actors_in_movie)
 schema = make_executable_schema(type_defs, movie, query, mutation, actor)
 
+###                ###
+
 # root message
 @app.route("/", methods=['GET'])
 def home():
     return make_response("<h1 style='color:blue'>Welcome to the Movie service!</h1>", 200)
 
 
-#####
 # graphql entry points
-
 
 @app.route('/graphql', methods=['POST'])
 def graphql_server():
