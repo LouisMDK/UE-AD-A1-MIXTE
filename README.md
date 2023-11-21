@@ -61,5 +61,7 @@ The services are also forwarded on the host machine (localhost) with the followi
 - Booking : 5002
 - Showtime : 5001
 
+These ports are set in the .env file. When starting the containers, the environment variables are loaded and fetched in the python files. 
+
 Postman Collections are available in the folder /postman. 
 Be aware, only HTTP requests are available since gRPC/graphQL cannot be exported from Postman :(
