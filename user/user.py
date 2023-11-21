@@ -286,6 +286,7 @@ def get_user_bookings(userid):
 
 
 @app.route("/bookings/<userid>", methods=['POST'])
+
 def add_user_booking(userid):
     req = request.get_json()
     try:

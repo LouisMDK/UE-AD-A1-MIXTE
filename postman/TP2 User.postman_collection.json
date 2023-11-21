@@ -1,9 +1,10 @@
 {
 	"info": {
 		"_postman_id": "379bd6cb-710d-4944-ab39-9a6e054f7829",
-		"name": "ArchiD TP REST",
+		"name": "TP2 User",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "30058572"
+		"_exporter_id": "30058572",
+		"_collection_link": "https://lunar-escape-607532.postman.co/workspace/My-Workspace~2ab16034-cf2b-4f9c-8bd4-42bc46f69a01/collection/30058572-379bd6cb-710d-4944-ab39-9a6e054f7829?action=share&source=collection_link&creator=30058572"
 	},
 	"item": [
 		{
@@ -202,7 +203,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://127.0.0.1:8080/bookings/garret_heaton",
+							"raw": "http://127.0.0.1:8080/bookings/chris_rivers",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -213,7 +214,7 @@
 							"port": "8080",
 							"path": [
 								"bookings",
-								"garret_heaton"
+								"chris_rivers"
 							]
 						}
 					},
