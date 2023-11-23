@@ -17,6 +17,7 @@ bookingPort = int(os.environ['BOOKING_PORT'])
 showtimeHost = os.environ["SHOWTIME_HOST"]
 showtimePort = int(os.environ['SHOWTIME_PORT'])
 
+
 ###            ###
 
 
@@ -28,7 +29,6 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
             self.db = json.load(jsf)["bookings"]
         # super().__init__() would be useless as the super class have no constructor
 
-
     def GetAllBookings(self, request, context):
         for book in self.db:
             yield booking_pb2.Book(
@@ -37,7 +37,6 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
                     booking_pb2.BookingDate(date=daty['date'], movies=daty['movies']) for daty in book['dates']
                 ]
             )
-
 
     def GetBookingByUser(self, request, context):
         for book in self.db:
@@ -76,7 +75,7 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
                 userIndex = i
                 break
 
-        # or create it if don't already exist
+        # or create it if it doesn't already exist
         if userIndex is None:
             user = {'userid': request.userid, 'dates': []}
             self.db.append(user)
@@ -89,7 +88,7 @@ class BookingServicer(booking_pb2_grpc.BookingServicer):
                 dateIndex = i
                 break
 
-        # or create it if don't already exist
+        # or create it if it doesn't already exist
         if dateIndex is None:
             date = {'date': request.date, 'movies': []}
             self.db[userIndex]['dates'].append(date)
