@@ -108,6 +108,39 @@ def delete_user_by_id(id):
             return make_response(jsonify(tmpUser), 200)
     return make_response(jsonify({"error": "there is no user to delete for this id"}), 400)
 
+# get movie information from a user book regarding user id
+@app.route("/users/bookedMovies/<id>", methods=['GET'])
+def get_user_booked_movies(id):
+    try:
+        with grpc.insecure_channel(f"{bookingHost}:{bookingPort}") as channel:
+            bookingStub = booking_pb2_grpc.BookingStub(channel)
+            booking = bookingStub.GetBookingByUser(booking_pb2.User(userid=id))
+            response = MessageToDict(booking, including_default_value_fields=True)
+    except Exception as e:
+        return make_response(jsonify({"error": str(e)}), 500)
+    movieInfo = requests.post(
+                f"http://{movieHost}:{moviePort}/graphql",
+                json={
+                    'query': """
+                        query Movie_with_id {
+                            %s
+                        }
+                    """ % ''.join([''.join([
+                                f"""
+                                    my_{date["date"]}_{i}: movie_with_id(_id: "{mov}") {{
+                                        id
+                                        title
+                                        director
+                                        rating
+                                    }}
+                                """ for (i, mov) in enumerate(date["movies"])
+                            ]) for date in response["dates"]])
+                }
+            ).json()
+    
+    for (i, el) in enumerate(response["dates"]):
+        response["dates"][i]["movies"] = [movie for key, movie in movieInfo["data"].items() if el["date"] == key.split('_')[1]]
+    return jsonify(response), 200
 
 # movie delegation
 
